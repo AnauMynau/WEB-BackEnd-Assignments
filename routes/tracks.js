@@ -67,34 +67,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-app.post('/contact', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).send('All fields are required');
-    }
-
-    const contactMessage = {
-      name,
-      email,
-      message,
-      createdAt: new Date()
-    };
-
-    await getDb().collection('contacts').insertOne(contactMessage);
-
-    res.send(`
-      <h2>Thank you, ${name}!</h2>
-      <p>Your message has been saved successfully.</p>
-      <a href="/">Back to home</a>
-    `);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
-});
-
 // PUT 
 router.put('/:id', async (req, res) => {
     try {
