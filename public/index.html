@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TYNDA - Music Streaming System</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <h1>TYNDA</h1>
+      <p class="subtitle">
+        A music streaming web app where users can discover tracks, listen online, and build playlists.
+      </p>
+
+      <nav class="nav">
+          <a href="/">Home</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/tracks">Tracks</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section id="team" class="card">
+      <h2>Team</h2>
+      <ul>
+        <li><strong>Kassenov Abdulkarim</strong></li>
+        <li><strong>Noyan Inayatulla</strong></li>
+        <li><strong>Atalykov Sultan</strong></li>
+      </ul>
+    </section>
+    
+    <section class="card">
+      <h2>API test links</h2>
+      <ul>
+        <li><a href="/api/tracks">GET /api/tracks</a></li>
+        <li><a href="/api/tracks/1">GET /api/tracks/1</a></li>
+        <li><a href="/api/tracks/2">GET /api/tracks/2</a></li>
+      </ul>
+    </section>
+
+
+    <footer class="footer">
+      <p>© <span id="year"></span> TYNDA - course project</p>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

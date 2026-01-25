@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — TYNDA</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">TYNDA</a>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a class="active" href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/tracks">Tracks</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1>About the project</h1>
+      <p class="muted">
+        TYNDA is a music streaming web app where users discover tracks and build playlists.
+      </p>
+
+      <div class="hr"></div>
+
+      <h2>Team</h2>
+      <ul class="list">
+        <li><strong>Kassenov Abdulkarim</strong></li>
+        <li><strong>Noyan Inayatulla</strong></li>
+        <li><strong>Atalykov Sultan</strong></li>
+      </ul>
+    </section>
+    
+    <section id="features" class="card">
+      <h2>Planned Features</h2>
+      <ul class="features">
+        <li>Track catalog (search, filters, genres)</li>
+        <li>Track page (details + Play button)</li>
+        <li>Playlists (create, add/remove tracks)</li>
+        <li>Likes / Favorites</li>
+        <li>Listening history</li>
+        <li>Admin panel to upload/manage tracks (optional)</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> TYNDA — course project</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

@@ -26,7 +26,7 @@ we have refactored the project structure to meet the new assignment requirements
 
 ---
 
-## 🚀 Setup Instructions
+## Setup Instructions
 
 Since we added new dependencies:
 

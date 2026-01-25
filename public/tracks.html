@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracks Overview</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">TYNDA</a>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a class="active" href="/tracks">Tracks</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>Tracks</h1>
+        <p class="muted" id="tracks-status" style="margin: 0; font-size: 14px;">Loading...</p>
+    </div>
+
+    <div class="grid grid-tracks-layout">
+      
+      <section class="card" style="height: 100%;">
+        <div class="card-head">
+            <h2>All tracks & Filters</h2>
+        </div>
+
+        <div class="filters-panel">
+            <div class="filters-row" style="display: grid; grid-template-columns: 2fr 1fr;">
+                <input type="text" id="search-input" placeholder="Filter by Artist name..." oninput="loadTracks()">
+                
+                <select id="sort-select" onchange="loadTracks()">
+                    <option value="">Sort: Default</option>
+                    <option value="title">A-Z (Title)</option>
+                    <option value="date">Newest First</option>
+                </select>
+            </div>
+
+            <div class="filters-row" style="padding-top: 10px; border-top: 1px solid var(--stroke);">
+                <span class="projection-title">Show Columns:</span>
+                
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="proj-artist" checked onchange="loadTracks()">
+                    <span class="checkmark"></span> Artist
+                </label>
+
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="proj-album" checked onchange="loadTracks()">
+                    <span class="checkmark"></span>
+                    Album
+                </label>
+
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="proj-dur" checked onchange="loadTracks()">
+                    <span class="checkmark"></span>
+                    Duration
+                </label>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="table" style="width:100%; border-collapse: collapse; white-space: nowrap;">
+            <thead>
+                <tr>
+                <th style="text-align:left; padding:12px 8px; color:var(--muted); font-size:13px; letter-spacing: 1px;">ID</th>
+                <th style="text-align:left; padding:12px 8px; color:var(--text); font-size:14px;">TITLE</th>
+                <th style="text-align:left; padding:12px 8px; color:var(--muted); font-size:13px;">ARTIST</th>
+                <th style="text-align:left; padding:12px 8px; color:var(--muted); font-size:13px;">ALBUM</th>
+                <th style="text-align:left; padding:12px 8px; color:var(--muted); font-size:13px;">TIME</th>
+                <th style="text-align:right; padding:12px 8px; color:var(--muted); font-size:13px;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody id="tracks-body"></tbody>
+            </table>
+        </div>
+      </section>
+
+      <section class="card" style="height: fit-content; position: sticky; top: 90px;">
+        <div class="card-head">
+            <h2 id="form-title">Create track</h2>
+        </div>
+
+        <form id="track-form" class="form">
+          <input type="hidden" id="track-id" />
+
+          <label class="field">
+            <span>Title *</span>
+            <input type="text" id="track-title" required placeholder="Track name" />
+          </label>
+
+          <label class="field">
+            <span>Artist *</span>
+            <input type="text" id="track-artist" required placeholder="Performer" />
+          </label>
+
+          <label class="field">
+            <span>Album (optional)</span>
+            <input type="text" id="track-album" placeholder="Album title" />
+          </label>
+
+          <label class="field">
+            <span>Duration (sec)</span>
+            <input type="number" id="track-duration" min="0" step="1" placeholder="e.g. 180" />
+          </label>
+
+          <div class="actions" style="margin-top: 20px; flex-direction: column; display: grid;">
+            <button class="btn" type="submit" id="save-btn" style="width: 100%;">Save track</button>
+            <button class="btn btn-ghost" type="button" id="reset-btn" style="width: 100%; text-align: center; justify-content: center;">Cancel / Reset</button>
+          </div>
+          <p class="muted" id="form-status" style="margin-top:10px; min-height: 20px; font-size:13px; text-align: center;"></p>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> TYNDA — course project</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const API_BASE = '/api/tracks';
+    const tracksStatusEl = document.getElementById('tracks-status');
+    const tracksBodyEl = document.getElementById('tracks-body');
+    const form = document.getElementById('track-form');
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
+    const projArtist = document.getElementById('proj-artist');
+    const projAlbum = document.getElementById('proj-album');
+    const projDur = document.getElementById('proj-dur');
+
+    async function loadTracks() {
+      tracksStatusEl.innerHTML = '<span style="color:var(--accent2)">Loading data...</span>';
+      tracksBodyEl.innerHTML = '';
+      const artistQuery = searchInput.value.trim();
+      const sortQuery = sortSelect.value;
+      let fields = ['title']; 
+      if (projArtist.checked) fields.push('artist');
+      if (projAlbum.checked) fields.push('album');
+      if (projDur.checked) fields.push('durationSeconds');
+      const fieldsQuery = fields.join(',');
+      let url = `${API_BASE}?`;
+      if (artistQuery) url += `artist=${encodeURIComponent(artistQuery)}&`;
+      if (sortQuery) url += `sortBy=${sortQuery}&`;
+      if (fieldsQuery) url += `fields=${fieldsQuery}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed');
+        const tracks = await res.json();
+
+        if (!Array.isArray(tracks) || tracks.length === 0) {
+          tracksStatusEl.textContent = 'No tracks found.';
+          tracksBodyEl.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align:center; color:var(--muted);">No tracks match your criteria.</td></tr>';
+          return;
+        }
+
+        tracksStatusEl.textContent = `Showing ${tracks.length} track(s)`;
+        tracksBodyEl.innerHTML = '';
+
+        tracks.forEach((track) => {
+          const tr = document.createElement('tr');
+          const shortId = track._id.slice(-4);
+          const showArtist = track.artist !== undefined ? track.artist : '<span style="opacity:0.3;">---</span>';
+          const showAlbum = track.album !== undefined ? (track.album || '-') : '<span style="opacity:0.3;">---</span>';
+          const showDur = track.durationSeconds !== undefined ? (track.durationSeconds || '-') : '<span style="opacity:0.3;">---</span>';
+
+          tr.innerHTML = `
+            <td style="padding:12px 8px; font-family:monospace; color:var(--accent2); opacity:0.7;">..${shortId}</td>
+            <td style="padding:12px 8px; font-weight:600;">${track.title}</td>
+            <td style="padding:12px 8px;">${showArtist}</td>
+            <td style="padding:12px 8px; color:var(--muted); font-size:0.9em;">${showAlbum}</td>
+            <td style="padding:12px 8px; color:var(--muted); font-size:0.9em;">${showDur}</td>
+            <td style="padding:12px 8px; text-align:right;">
+              <div style="display:flex; gap:8px; justify-content:flex-end;">
+                  <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px; min-width:auto;" type="button" onclick="editTrack('${track._id}')">Edit</button>
+                  <button class="btn" style="padding:6px 12px; font-size:12px; min-width:auto; background:linear-gradient(90deg, #ff4757, #ff6b81); color:white; border:none;" type="button" onclick="deleteTrack('${track._id}')">Del</button>
+              </div>
+            </td>
+          `;
+          tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+          tracksBodyEl.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+        tracksStatusEl.textContent = 'Error loading data.';
+      }
+    }
+
+    const idInput = document.getElementById('track-id');
+    const titleInput = document.getElementById('track-title');
+    const artistInput = document.getElementById('track-artist');
+    const albumInput = document.getElementById('track-album');
+    const durationInput = document.getElementById('track-duration');
+    const saveBtn = document.getElementById('save-btn');
+    const formTitleEl = document.getElementById('form-title');
+
+    function resetForm() {
+      idInput.value = '';
+      titleInput.value = '';
+      artistInput.value = '';
+      albumInput.value = '';
+      durationInput.value = '';
+      formTitleEl.textContent = 'Create track';
+      saveBtn.textContent = 'Save track';
+    }
+
+    document.getElementById('reset-btn').addEventListener('click', resetForm);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = idInput.value.trim();
+      const bodyData = {
+        title: titleInput.value.trim(),
+        artist: artistInput.value.trim(),
+        album: albumInput.value.trim(),
+        durationSeconds: durationInput.value ? Number(durationInput.value) : null,
+      };
+
+      try {
+        let url = API_BASE;
+        let method = 'POST';
+        if (id) {
+          url = API_BASE + '/' + id;
+          method = 'PUT';
+        }
+        await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyData),
+        });
+        await loadTracks();
+        resetForm();
+      } catch (err) { alert('Error saving'); }
+    });
+
+    async function editTrack(id) {
+        try {
+            const res = await fetch(API_BASE + '/' + id);
+            const track = await res.json();
+            idInput.value = track._id;
+            titleInput.value = track.title;
+            artistInput.value = track.artist;
+            albumInput.value = track.album || '';
+            durationInput.value = track.durationSeconds || '';
+            formTitleEl.textContent = 'Edit track';
+            saveBtn.textContent = 'Update track';
+            document.querySelector('.grid-tracks-layout').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch(e) { console.error(e); }
+    }
+
+    async function deleteTrack(id) {
+        if (!confirm('Delete track?')) return;
+        await fetch(API_BASE + '/' + id, { method: 'DELETE' });
+        loadTracks();
+    }
+
+    loadTracks();
+  </script>
+</body>
+</html>

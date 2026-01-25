@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — TYNDA</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">TYNDA</a>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a class="active" href="/contact">Contact</a>
+        <a href="/tracks">Tracks</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="card-head">
+        <h1>Send us a message</h1>
+        <p class="muted">We’ll reply as soon as possible.</p>
+      </div>
+
+      <form class="form" action="/contact" method="POST">
+        <div class="grid">
+          <label class="field">
+            <span>Name</span>
+            <input name="name" type="text" placeholder="Your name" required />
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input name="email" type="email" placeholder="you@example.com" required />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Message</span>
+          <textarea name="message" rows="6" placeholder="Write your message..." required></textarea>
+        </label>
+
+        <div class="actions">
+          <button class="btn" type="submit">Send</button>
+          <a class="btn btn-ghost" href="/">Back</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> TYNDA - course project</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
