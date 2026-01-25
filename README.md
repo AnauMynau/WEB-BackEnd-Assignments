@@ -1,102 +1,199 @@
-# TYNDA — Music Streaming API (Assignment 3 Part 1)
+TYNDA — Music Streaming Web Application
 
-## About the Project
-This is the backend update for our **TYNDA** music streaming project. 
-For **Assignment 3 (Part 1)**, we have migrated the database from SQLite to **MongoDB** and implemented a full RESTful API with advanced query features.
+Assignment 3 — Part 2
 
----
+About the Project
 
-## Important Changes for the Team (Read This!)
+TYNDA is a full-stack music streaming web application developed as part of Assignment 3.
 
-we have refactored the project structure to meet the new assignment requirements. Here is what changed from Assignment 2:
+Part 1 focuses on building a RESTful backend API using Node.js, Express, and MongoDB
 
-1.  **Database Migration:** * Removed **SQLite** (`database.sqlite`).
-    * Added **MongoDB** (Native Driver). The database name is `tynda_music`.
-    * Data is now stored in a collection called `tracks`.
+Part 2 extends the project with a production-ready web interface and deployment to a public hosting platform
 
-2.  **Folder Structure:**
-    * Moved database connection logic to `database/db.js`.
-    * Moved all API routes to `routes/tracks.js` (cleaner code).
-    * `server.js` is now much smaller and only handles configuration.
+The application demonstrates full CRUD functionality, database integration, and environment-based configuration.
 
-3.  **New API Features:**
-    * Added **Filtering** (find by artist or title).
-    * Added **Sorting** (sort by title or date).
-    * Added **Projection** (select specific fields).
+Live Demo (Production)
 
----
+Deployed URL:
 
-## Setup Instructions
+https://<your-app-name>.onrender.com
 
-Since we added new dependencies:
+Technologies Used
 
-1.  **Install Dependencies:**
-    ```bash
-    npm install
-    ```
-    *(This installs `mongodb` and `express`)*
+Node.js
 
-2.  **Start MongoDB:**
-    MongoDB server is running on port `27017`.
+Express.js
 
-3.  **Run the Server:**
-    ```bash
-    node server.js
-    ```
-    The server will start at: `http://localhost:3009`
+MongoDB (Native Driver)
 
----
+HTML, CSS, JavaScript
 
-## 🛠 API Documentation
+Fetch API
 
-We now have a full CRUD API. Here is how to use it:
+MongoDB Atlas
 
-### 1. Get All Tracks (Read)
-**Endpoint:** `GET /api/tracks`
+Render (Deployment)
 
-You can use query parameters to filter and sort:
-* **Filter by Artist:** `?artist=Eminem`
-* **Sort by Title:** `?sortBy=title` (A-Z)
-* **Sort by Date:** `?sortBy=date` (Newest first)
-* **Select Fields (Projection):** `?fields=title,artist`
-
-**Example:**
-`http://localhost:3009/api/tracks?artist=Drake&sortBy=title`
-
-### 2. Get Single Track (Read)
-**Endpoint:** `GET /api/tracks/:id`
-
-### 3. Create Track (Create)
-**Endpoint:** `POST /api/tracks`
-* **Body (JSON):**
-    ```json
-    {
-      "title": "Shape of You",
-      "artist": "Ed Sheeran",
-      "album": "Divide",
-      "durationSeconds": 233
-    }
-    ```
-
-### 4. Update Track (Update)
-**Endpoint:** `PUT /api/tracks/:id`
-
-### 5. Delete Track (Delete)
-**Endpoint:** `DELETE /api/tracks/:id`
-
----
-
-## Project Structure
-
-```text
+Project Structure
 /
 ├── database/
-│   └── db.js            # MongoDB connection (Native Driver)
+│   └── db-mongodb.js        # MongoDB connection logic
 ├── routes/
-│   └── tracks.js        # All CRUD logic 
-├── public/              
-│   ├── index.html       
-│   ├── tracks.html      
-│   └── style.css        
-├── server.js            # Entry point (Middleware & Setup)
-└── README.md            
+│   └── tracks.js            # Tracks CRUD API
+├── public/
+│   ├── index.html           # Home page
+│   ├── about.html           # About page
+│   ├── contact.html         # Contact form
+│   ├── tracks.html          # Tracks UI (CRUD)
+│   ├── 404.html             # Not found page
+│   └── style.css            # Styles
+├── server.js                # Express server entry point
+├── .gitignore
+└── README.md
+
+Environment Variables
+
+The application uses environment variables for secure configuration.
+
+Required Variables
+PORT
+MONGO_URI
+
+Local Development (.env)
+PORT=3009
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/tynda_music
+
+
+The .env file is not committed to GitHub
+
+Production (Render)
+
+Environment variables are configured directly in the Render dashboard.
+
+Setup Instructions (Local)
+1️ Install dependencies
+npm install
+
+2 Create .env file
+PORT=3009
+MONGO_URI=your_mongodb_connection_string
+
+Run the server
+node server.js
+
+
+Server will start at:
+
+http://localhost:3009
+
+MongoDB Usage
+
+Database name: tynda_music
+
+Collections:
+
+tracks — music tracks
+
+contacts — contact form messages
+
+MongoDB automatically creates databases and collections when the first document is inserted.
+
+API Documentation
+1️ Get All Tracks
+
+GET /api/tracks
+
+Query Parameters:
+
+artist — filter by artist
+
+title — filter by title
+
+sortBy=title — sort A–Z
+
+sortBy=date — newest first
+
+fields=title,artist — projection
+
+Example:
+
+/api/tracks?artist=Drake&sortBy=title
+
+2️ Get Single Track
+
+GET /api/tracks/:id
+
+3️ Create Track
+
+POST /api/tracks
+
+{
+  "title": "Shape of You",
+  "artist": "Ed Sheeran",
+  "album": "Divide",
+  "durationSeconds": 233
+}
+
+4 Update Track
+
+PUT /api/tracks/:id
+
+5️ Delete Track
+
+DELETE /api/tracks/:id
+
+Web Interface (Part 2)
+
+The deployed application includes a production web interface accessible from the root URL /.
+
+Features:
+
+Display tracks in a list
+
+Create new tracks using a form
+
+Update existing tracks
+
+Delete tracks
+
+Contact form with MongoDB storage
+
+Dynamic data loading from backend API
+
+No Postman required for demonstration
+
+Contact Form
+
+URL: /contact
+
+Method: POST
+
+Stored in MongoDB collection: contacts
+
+Each message includes:
+
+Name
+
+Email
+
+Message
+
+Timestamp
+
+Deployment
+
+The application is deployed on Render.
+
+Build Command
+npm install
+
+Start Command
+node server.js
+
+
+The server uses:
+
+process.env.PORT
+
+
+as required for production hosting.        
