@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact — TYNDA</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta name="description" content="Get in touch with TYNDA team">
+  <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
   <header class="topbar">
     <div class="container topbar-inner">
@@ -15,51 +18,139 @@
         <a href="/about">About</a>
         <a class="active" href="/contact">Contact</a>
         <a href="/tracks">Tracks</a>
+        <div class="nav-auth" id="nav-auth"></div>
       </nav>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <div class="card-head">
-        <h1>Send us a message</h1>
-        <p class="muted">We’ll reply as soon as possible.</p>
-      </div>
-
-      <form class="form" action="/contact" method="POST">
-        <div class="grid">
-          <label class="field">
-            <span>Name</span>
-            <input name="name" type="text" placeholder="Your name" required />
-          </label>
-
-          <label class="field">
-            <span>Email</span>
-            <input name="email" type="email" placeholder="you@example.com" required />
-          </label>
+    <div class="grid grid-2">
+      <section class="card animate-fadeInUp">
+        <div class="card-head">
+          <h1>Get in Touch</h1>
+          <p class="muted">We'd love to hear from you</p>
         </div>
 
-        <label class="field">
-          <span>Message</span>
-          <textarea name="message" rows="6" placeholder="Write your message..." required></textarea>
-        </label>
+        <form class="form" action="/contact" method="POST" id="contact-form">
+          <div class="form-grid">
+            <div class="field">
+              <label for="name">Your Name</label>
+              <input type="text" id="name" name="name" placeholder="John Doe" required>
+            </div>
 
-        <div class="actions">
-          <button class="btn" type="submit">Send</button>
-          <a class="btn btn-ghost" href="/">Back</a>
+            <div class="field">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="6" placeholder="Write your message here..." required></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn" type="submit">
+              <span>Send Message</span>
+            </button>
+            <a class="btn btn-ghost" href="/">Back to Home</a>
+          </div>
+        </form>
+      </section>
+
+      <section class="card animate-fadeInUp" style="animation-delay: 0.1s;">
+        <div class="card-head">
+          <h2>Contact Info</h2>
         </div>
-      </form>
-    </section>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(124,58,237,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+              📧
+            </div>
+            <div>
+              <h3 style="font-size: 1rem; margin-bottom: 4px;">Email</h3>
+              <p style="color: var(--text-secondary); font-size: 0.9rem;">support@tynda.kz</p>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(6,182,212,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+              🏫
+            </div>
+            <div>
+              <h3 style="font-size: 1rem; margin-bottom: 4px;">University</h3>
+              <p style="color: var(--text-secondary); font-size: 0.9rem;">Astana IT University</p>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(16,185,129,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+              📚
+            </div>
+            <div>
+              <h3 style="font-size: 1rem; margin-bottom: 4px;">Course</h3>
+              <p style="color: var(--text-secondary); font-size: 0.9rem;">Web Technologies (Backend)</p>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(245,158,11,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+              📅
+            </div>
+            <div>
+              <h3 style="font-size: 1rem; margin-bottom: 4px;">Assignment</h3>
+              <p style="color: var(--text-secondary); font-size: 0.9rem;">Assignment 4 - Sessions & Security</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="footer">
     <div class="container">
-      <p>© <span id="year"></span> TYNDA - course project</p>
+      <p>© <span id="year"></span> TYNDA — Course Project</p>
     </div>
   </footer>
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Auth UI
+    async function updateAuthUI() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        const authContainer = document.getElementById('nav-auth');
+
+        if (data.isAuthenticated) {
+          authContainer.innerHTML = `
+                        <span class="user-badge">${data.user.username}</span>
+                        <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+                    `;
+        } else {
+          authContainer.innerHTML = `
+                        <a href="/login" class="btn btn-ghost btn-sm">Sign In</a>
+                        <a href="/register" class="btn btn-sm">Sign Up</a>
+                    `;
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      }
+    }
+
+    async function logout() {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.reload();
+    }
+
+    updateAuthUI();
   </script>
 </body>
+
 </html>

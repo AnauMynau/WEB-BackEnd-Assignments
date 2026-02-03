@@ -1,56 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TYNDA - Music Streaming System</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TYNDA — Music Streaming Platform</title>
+  <meta name="description"
+    content="TYNDA - A modern music streaming platform. Discover tracks, create playlists, and enjoy music.">
+  <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
   <header class="hero">
     <div class="container">
       <h1>TYNDA</h1>
       <p class="subtitle">
-        A music streaming web app where users can discover tracks, listen online, and build playlists.
+        Your personal music streaming platform. Discover new tracks,
+        manage your collection, and explore endless possibilities.
       </p>
 
       <nav class="nav">
-          <a href="/">Home</a>
-          <a href="/about">About</a>
-          <a href="/contact">Contact</a>
-          <a href="/tracks">Tracks</a>
+        <a href="/" class="active">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/tracks">Tracks</a>
+        <div class="nav-auth" id="nav-auth">
+          <!-- Auth buttons will be injected here -->
+        </div>
       </nav>
     </div>
   </header>
 
   <main class="container">
+    <div class="grid grid-2">
+      <section class="card animate-fadeInUp">
+        <div class="card-head">
+          <h2>Our Platform</h2>
+        </div>
+        <p>TYNDA is a music streaming web app where users discover tracks and build playlists.
+          Explore our extensive collection of tracks and manage your favorite music.</p>
 
-    <section id="team" class="card">
-      <h2>Team</h2>
-      <ul>
-        <li><strong>Kassenov Abdulkarim</strong></li>
-        <li><strong>Noyan Inayatulla</strong></li>
-        <li><strong>Atalykov Sultan</strong></li>
-      </ul>
-    </section>
-    
-    <section class="card">
-      <h2>API test links</h2>
-      <ul>
-        <li><a href="/api/tracks">GET /api/tracks</a></li>
-        <li><a href="/api/tracks/1">GET /api/tracks/1</a></li>
-        <li><a href="/api/tracks/2">GET /api/tracks/2</a></li>
-      </ul>
+        <div class="hr"></div>
+
+        <div class="actions">
+          <a href="/tracks" class="btn">Browse Tracks</a>
+          <a href="/about" class="btn btn-ghost">Learn More</a>
+        </div>
+      </section>
+
+      <section class="card animate-fadeInUp" style="animation-delay: 0.1s;">
+        <div class="card-head">
+          <h2>Development Team</h2>
+        </div>
+        <ul class="list">
+          <li><strong>Kassenov Abdulkarim</strong></li>
+          <li><strong>Noyan Inayatulla</strong></li>
+          <li><strong>Atalykov Sultan</strong></li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="card animate-fadeInUp" style="margin-top: 24px; animation-delay: 0.2s;">
+      <div class="card-head">
+        <h2>Features</h2>
+      </div>
+      <div class="grid grid-2" style="gap: 16px;">
+        <div
+          style="padding: 16px; background: rgba(124,58,237,0.1); border-radius: var(--radius); border: 1px solid rgba(124,58,237,0.2);">
+          <h3 style="margin-bottom: 8px; color: var(--accent1-light);">Secure Authentication</h3>
+          <p style="font-size: 0.9rem;">Session-based login with bcrypt password hashing and secure cookies.</p>
+        </div>
+        <div
+          style="padding: 16px; background: rgba(6,182,212,0.1); border-radius: var(--radius); border: 1px solid rgba(6,182,212,0.2);">
+          <h3 style="margin-bottom: 8px; color: var(--accent2-light);">Full CRUD</h3>
+          <p style="font-size: 0.9rem;">Create, read, update, and delete tracks through the web interface.</p>
+        </div>
+        <div
+          style="padding: 16px; background: rgba(16,185,129,0.1); border-radius: var(--radius); border: 1px solid rgba(16,185,129,0.2);">
+          <h3 style="margin-bottom: 8px; color: var(--success);">Modern UI</h3>
+          <p style="font-size: 0.9rem;">Beautiful glassmorphism design with smooth animations.</p>
+        </div>
+        <div
+          style="padding: 16px; background: rgba(245,158,11,0.1); border-radius: var(--radius); border: 1px solid rgba(245,158,11,0.2);">
+          <h3 style="margin-bottom: 8px; color: var(--warning);">Protected Routes</h3>
+          <p style="font-size: 0.9rem;">Write operations require authentication. Read operations are public.</p>
+        </div>
+      </div>
     </section>
 
+    <section class="card animate-fadeInUp" style="margin-top: 24px; animation-delay: 0.3s;">
+      <div class="card-head">
+        <h2>API Endpoints</h2>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+              <th>Auth</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/tracks</code></td>
+              <td>Get all tracks</td>
+              <td>Public</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/tracks/:id</code></td>
+              <td>Get single track</td>
+              <td>Public</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/tracks</code></td>
+              <td>Create new track</td>
+              <td>Required</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">PUT</span></td>
+              <td><code>/api/tracks/:id</code></td>
+              <td>Update track</td>
+              <td>Required</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">DELETE</span></td>
+              <td><code>/api/tracks/:id</code></td>
+              <td>Delete track</td>
+              <td>Required</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <footer class="footer">
-      <p>© <span id="year"></span> TYNDA - course project</p>
+      <p>© <span id="year"></span> TYNDA — Course Project | Assignment 4 - Sessions & Security</p>
     </footer>
   </main>
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Check auth status and update nav
+    async function updateAuthUI() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        const authContainer = document.getElementById('nav-auth');
+
+        if (data.isAuthenticated) {
+          authContainer.innerHTML = `
+                        <span class="user-badge">${data.user.username}</span>
+                        <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+                    `;
+        } else {
+          authContainer.innerHTML = `
+                        <a href="/login" class="btn btn-ghost btn-sm">Sign In</a>
+                        <a href="/register" class="btn btn-sm">Sign Up</a>
+                    `;
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.reload();
+      } catch (err) {
+        console.error('Logout failed:', err);
+      }
+    }
+
+    updateAuthUI();
   </script>
 </body>
+
 </html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — TYNDA</title>
+    <meta name="description" content="Sign in to TYNDA music streaming platform">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card animate-fadeInUp">
+            <div class="auth-header">
+                <a href="/" class="brand">TYNDA</a>
+                <h1>Welcome back</h1>
+                <p>Sign in to continue to your account</p>
+            </div>
+
+            <form id="login-form" class="form">
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required
+                        autocomplete="email">
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="password-field">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required
+                            autocomplete="current-password" minlength="6">
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <span id="eye-icon">👁</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="error-message" class="hidden"
+                    style="color: var(--error); font-size: 0.9rem; text-align: center;"></div>
+
+                <button type="submit" class="btn" style="width: 100%;" id="submit-btn">
+                    <span id="btn-text">Sign In</span>
+                    <span id="btn-loading" class="loading-spinner hidden"></span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register">Create one</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        const submitBtn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoading = document.getElementById('btn-loading');
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.textContent = '👁';
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = { success: '✓', error: '✕', warning: '⚠' };
+
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || '•'}</span>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        function setLoading(loading) {
+            submitBtn.disabled = loading;
+            btnText.textContent = loading ? 'Signing in...' : 'Sign In';
+            btnLoading.classList.toggle('hidden', !loading);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.classList.add('hidden');
+            setLoading(true);
+
+            const formData = {
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                showToast('Login successful! Redirecting...', 'success');
+
+                // Redirect after short delay
+                setTimeout(() => {
+                    window.location.href = '/tracks';
+                }, 1000);
+
+            } catch (err) {
+                errorMessage.textContent = err.message;
+                errorMessage.classList.remove('hidden');
+                showToast(err.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Check if already logged in
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.isAuthenticated) {
+                    window.location.href = '/tracks';
+                }
+            });
+    </script>
+</body>
+
+</html>

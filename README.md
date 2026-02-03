@@ -1,199 +1,192 @@
-TYNDA — Music Streaming Web Application
+# TYNDA Music Streaming Platform
 
-Assignment 3 — Part 2
+A web application for music track management with secure session-based authentication.
 
-About the Project
+**Course:** Web Technologies (Backend)  
+**Assignment:** 4 - Sessions & Cookies Security  
+**Team:** Kassenov Abdulkarim, Noyan Inayatulla, Atalykov Sultan
 
-TYNDA is a full-stack music streaming web application developed as part of Assignment 3.
+---
 
-Part 1 focuses on building a RESTful backend API using Node.js, Express, and MongoDB
+## Features
 
-Part 2 extends the project with a production-ready web interface and deployment to a public hosting platform
+- Session-based authentication with express-session
+- Password hashing using bcrypt (10 salt rounds)
+- HttpOnly cookies for XSS protection
+- Protected routes for write operations
+- Full CRUD operations for tracks
+- Search, filter, and sort functionality
+- Responsive modern UI design
 
-The application demonstrates full CRUD functionality, database integration, and environment-based configuration.
+---
 
-Live Demo (Production)
+## Tech Stack
 
-Deployed URL:
+| Layer | Technology |
+|-------|------------|
+| Backend | Node.js, Express.js |
+| Database | MongoDB Atlas |
+| Sessions | express-session, connect-mongo |
+| Security | bcryptjs |
+| Frontend | HTML5, CSS3, JavaScript |
 
-https://<your-app-name>.onrender.com
+---
 
-Technologies Used
+## Project Structure
 
-Node.js
-
-Express.js
-
-MongoDB (Native Driver)
-
-HTML, CSS, JavaScript
-
-Fetch API
-
-MongoDB Atlas
-
-Render (Deployment)
-
-Project Structure
-/
+```
+assignment3_part2/
+├── server.js              # Main server file
+├── package.json           # Dependencies
+├── .env                   # Environment variables
 ├── database/
-│   └── db-mongodb.js        # MongoDB connection logic
+│   └── db-mongodb.js      # MongoDB connection
+├── middleware/
+│   └── auth.js            # Authentication middleware
 ├── routes/
-│   └── tracks.js            # Tracks CRUD API
-├── public/
-│   ├── index.html           # Home page
-│   ├── about.html           # About page
-│   ├── contact.html         # Contact form
-│   ├── tracks.html          # Tracks UI (CRUD)
-│   ├── 404.html             # Not found page
-│   └── style.css            # Styles
-├── server.js                # Express server entry point
-├── .gitignore
-└── README.md
+│   ├── auth.js            # Auth routes (login, register, logout)
+│   └── tracks.js          # Tracks CRUD routes
+├── scripts/
+│   └── seed.js            # Database seeding script
+└── public/
+    ├── index.html         # Home page
+    ├── tracks.html        # Tracks management
+    ├── login.html         # Login page
+    ├── register.html      # Registration page
+    ├── about.html         # About page
+    ├── contact.html       # Contact page
+    ├── 404.html           # Error page
+    └── style.css          # Styles
+```
 
-Environment Variables
+---
 
-The application uses environment variables for secure configuration.
+## Quick Start
 
-Required Variables
-PORT
-MONGO_URI
+### 1. Install Dependencies
 
-Local Development (.env)
-PORT=3009
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/tynda_music
-
-
-The .env file is not committed to GitHub
-
-Production (Render)
-
-Environment variables are configured directly in the Render dashboard.
-
-Setup Instructions (Local)
-1️ Install dependencies
+```bash
 npm install
+```
 
-2 Create .env file
+### 2. Configure Environment
+
+Create `.env` file:
+
+```env
 PORT=3009
 MONGO_URI=your_mongodb_connection_string
+SESSION_SECRET=your_secret_key
+NODE_ENV=development
+```
 
-Run the server
-node server.js
+### 3. Seed Database (Optional)
 
+```bash
+npm run seed
+```
 
-Server will start at:
+This creates 25 sample tracks and 2 test users:
+- `admin@tynda.kz` / `admin123`
+- `test@tynda.kz` / `test123`
 
-http://localhost:3009
+### 4. Run Server
 
-MongoDB Usage
+```bash
+# Development (with auto-restart)
+npm run dev
 
-Database name: tynda_music
+# Production
+npm start
+```
 
-Collections:
+### 5. Open Browser
 
-tracks — music tracks
+Navigate to `http://localhost:3009`
 
-contacts — contact form messages
+---
 
-MongoDB automatically creates databases and collections when the first document is inserted.
+## API Endpoints
 
-API Documentation
-1️ Get All Tracks
+### Authentication
 
-GET /api/tracks
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/auth/register` | Create new account | No |
+| POST | `/api/auth/login` | Login to account | No |
+| POST | `/api/auth/logout` | Logout current user | Yes |
+| GET | `/api/auth/me` | Get current user info | No |
 
-Query Parameters:
+### Tracks
 
-artist — filter by artist
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/tracks` | Get all tracks | No |
+| GET | `/api/tracks/:id` | Get single track | No |
+| POST | `/api/tracks` | Create new track | Yes |
+| PUT | `/api/tracks/:id` | Update track | Yes |
+| DELETE | `/api/tracks/:id` | Delete track | Yes |
 
-title — filter by title
+### Query Parameters (GET /api/tracks)
 
-sortBy=title — sort A–Z
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `artist` | Filter by artist name | `?artist=Queen` |
+| `title` | Filter by title | `?title=Bohemian` |
+| `genre` | Filter by genre | `?genre=Rock` |
+| `sortBy` | Sort results | `?sortBy=title` |
+| `fields` | Select fields | `?fields=title,artist` |
 
-sortBy=date — newest first
+---
 
-fields=title,artist — projection
+## Security Implementation
 
-Example:
+### Password Hashing
 
-/api/tracks?artist=Drake&sortBy=title
+```javascript
+const hashedPassword = await bcrypt.hash(password, 10);
+```
 
-2️ Get Single Track
+### Session Configuration
 
-GET /api/tracks/:id
+```javascript
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    cookie: {
+        httpOnly: true,         // Prevents JS access
+        secure: false,          // true in production (HTTPS)
+        sameSite: 'lax',        // CSRF protection
+        maxAge: 86400000        // 1 day
+    }
+}));
+```
 
-3️ Create Track
+### Protected Route Middleware
 
-POST /api/tracks
-
-{
-  "title": "Shape of You",
-  "artist": "Ed Sheeran",
-  "album": "Divide",
-  "durationSeconds": 233
+```javascript
+function isAuthenticated(req, res, next) {
+    if (req.session && req.session.userId) {
+        return next();
+    }
+    return res.status(401).json({ error: 'Unauthorized' });
 }
+```
 
-4 Update Track
+---
 
-PUT /api/tracks/:id
+## Scripts
 
-5️ Delete Track
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start server |
+| `npm run dev` | Start with nodemon |
+| `npm run seed` | Seed database |
 
-DELETE /api/tracks/:id
+---
 
-Web Interface (Part 2)
+## License
 
-The deployed application includes a production web interface accessible from the root URL /.
-
-Features:
-
-Display tracks in a list
-
-Create new tracks using a form
-
-Update existing tracks
-
-Delete tracks
-
-Contact form with MongoDB storage
-
-Dynamic data loading from backend API
-
-No Postman required for demonstration
-
-Contact Form
-
-URL: /contact
-
-Method: POST
-
-Stored in MongoDB collection: contacts
-
-Each message includes:
-
-Name
-
-Email
-
-Message
-
-Timestamp
-
-Deployment
-
-The application is deployed on Render.
-
-Build Command
-npm install
-
-Start Command
-node server.js
-
-
-The server uses:
-
-process.env.PORT
-
-
-as required for production hosting.        
+This project was created for educational purposes as part of the Web Technologies course at Astana IT University.

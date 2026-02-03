@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About — TYNDA</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta name="description" content="Learn about TYNDA music streaming platform">
+  <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
   <header class="topbar">
     <div class="container topbar-inner">
@@ -15,48 +18,165 @@
         <a class="active" href="/about">About</a>
         <a href="/contact">Contact</a>
         <a href="/tracks">Tracks</a>
+        <div class="nav-auth" id="nav-auth"></div>
       </nav>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <h1>About the project</h1>
-      <p class="muted">
-        TYNDA is a music streaming web app where users discover tracks and build playlists.
+    <section class="card animate-fadeInUp">
+      <div class="card-head">
+        <h1>About TYNDA</h1>
+      </div>
+      <p style="font-size: 1.1rem; line-height: 1.8;">
+        TYNDA is a modern music streaming platform where users can discover tracks,
+        manage their collections, and explore new music. Our platform combines
+        beautiful design with powerful functionality.
       </p>
 
       <div class="hr"></div>
 
-      <h2>Team</h2>
+      <h2>Development Team</h2>
       <ul class="list">
-        <li><strong>Kassenov Abdulkarim</strong></li>
-        <li><strong>Noyan Inayatulla</strong></li>
-        <li><strong>Atalykov Sultan</strong></li>
+        <li><strong>Kassenov Abdulkarim</strong> — Backend Developer</li>
+        <li><strong>Noyan Inayatulla</strong> — Frontend Developer</li>
+        <li><strong>Atalykov Sultan</strong> — Database & API</li>
       </ul>
     </section>
-    
-    <section id="features" class="card">
-      <h2>Planned Features</h2>
-      <ul class="features">
-        <li>Track catalog (search, filters, genres)</li>
-        <li>Track page (details + Play button)</li>
-        <li>Playlists (create, add/remove tracks)</li>
-        <li>Likes / Favorites</li>
-        <li>Listening history</li>
-        <li>Admin panel to upload/manage tracks (optional)</li>
+
+    <section class="card animate-fadeInUp" style="animation-delay: 0.1s; margin-top: 24px;">
+      <div class="card-head">
+        <h2>Platform Features</h2>
+      </div>
+      <ul class="list">
+        <li>Track catalog with search and filtering</li>
+        <li>Full CRUD operations through Web UI</li>
+        <li>Secure session-based authentication</li>
+        <li>Password hashing with bcrypt</li>
+        <li>Protected routes for write operations</li>
+        <li>HttpOnly cookies for security</li>
+        <li>Modern responsive design</li>
+        <li>RESTful API architecture</li>
       </ul>
+    </section>
+
+    <section class="card animate-fadeInUp" style="animation-delay: 0.2s; margin-top: 24px;">
+      <div class="card-head">
+        <h2>Technology Stack</h2>
+      </div>
+      <div class="grid grid-2" style="gap: 16px;">
+        <div
+          style="padding: 20px; background: rgba(124,58,237,0.1); border-radius: var(--radius); border: 1px solid rgba(124,58,237,0.2);">
+          <h3 style="color: var(--accent1-light); margin-bottom: 12px;">Backend</h3>
+          <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 20px;">
+            <li>Node.js + Express.js</li>
+            <li>MongoDB (Atlas)</li>
+            <li>express-session</li>
+            <li>bcryptjs</li>
+          </ul>
+        </div>
+        <div
+          style="padding: 20px; background: rgba(6,182,212,0.1); border-radius: var(--radius); border: 1px solid rgba(6,182,212,0.2);">
+          <h3 style="color: var(--accent2-light); margin-bottom: 12px;">Frontend</h3>
+          <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 20px;">
+            <li>HTML5 + CSS3</li>
+            <li>Vanilla JavaScript</li>
+            <li>Glassmorphism design</li>
+            <li>Responsive layout</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card animate-fadeInUp" style="animation-delay: 0.3s; margin-top: 24px;">
+      <div class="card-head">
+        <h2>Security Features</h2>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Implementation</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Password Hashing</strong></td>
+              <td>bcrypt (10 rounds)</td>
+              <td>Secure password storage</td>
+            </tr>
+            <tr>
+              <td><strong>Session Management</strong></td>
+              <td>express-session + MongoDB</td>
+              <td>Persistent user sessions</td>
+            </tr>
+            <tr>
+              <td><strong>HttpOnly Cookies</strong></td>
+              <td>cookie.httpOnly = true</td>
+              <td>Prevent XSS attacks</td>
+            </tr>
+            <tr>
+              <td><strong>Secure Flag</strong></td>
+              <td>cookie.secure (production)</td>
+              <td>HTTPS only transmission</td>
+            </tr>
+            <tr>
+              <td><strong>SameSite</strong></td>
+              <td>cookie.sameSite = 'strict'</td>
+              <td>CSRF protection</td>
+            </tr>
+            <tr>
+              <td><strong>Auth Middleware</strong></td>
+              <td>isAuthenticated()</td>
+              <td>Protect write operations</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="container">
-      <p>© <span id="year"></span> TYNDA — course project</p>
+      <p>© <span id="year"></span> TYNDA — Course Project | Assignment 4</p>
     </div>
   </footer>
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Auth UI
+    async function updateAuthUI() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        const authContainer = document.getElementById('nav-auth');
+
+        if (data.isAuthenticated) {
+          authContainer.innerHTML = `
+                        <span class="user-badge">${data.user.username}</span>
+                        <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+                    `;
+        } else {
+          authContainer.innerHTML = `
+                        <a href="/login" class="btn btn-ghost btn-sm">Sign In</a>
+                        <a href="/register" class="btn btn-sm">Sign Up</a>
+                    `;
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      }
+    }
+
+    async function logout() {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.reload();
+    }
+
+    updateAuthUI();
   </script>
 </body>
+
 </html>
