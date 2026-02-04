@@ -1,6 +1,8 @@
 # TYNDA Music Streaming Platform
 
-A web application for music track management with secure session-based authentication.
+A web application for music track management with secure session-based authentication and personal playlists.
+
+🌐 **Live Demo:** [https://assignment3-part2.onrender.com](https://assignment3-part2.onrender.com)
 
 **Course:** Web Technologies (Backend)  
 **Assignment:** 4 - Sessions & Cookies Security  
@@ -8,19 +10,19 @@ A web application for music track management with secure session-based authentic
 
 ---
 
-## Features
+## ✨ Features
 
-- Session-based authentication with express-session
-- Password hashing using bcrypt (10 salt rounds)
-- HttpOnly cookies for XSS protection
-- Protected routes for write operations
-- Full CRUD operations for tracks
-- Search, filter, and sort functionality
-- Responsive modern UI design
+- 🔐 Session-based authentication with express-session
+- 🔒 Password hashing using bcrypt (10 salt rounds)
+- 🛡️ HttpOnly cookies for XSS protection
+- 🎵 Full CRUD operations for tracks
+- 📋 **Personal playlists** for each user
+- 🔍 Search, filter, and sort functionality
+- 🎨 Responsive modern UI with glassmorphism design
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -29,10 +31,11 @@ A web application for music track management with secure session-based authentic
 | Sessions | express-session, connect-mongo |
 | Security | bcryptjs |
 | Frontend | HTML5, CSS3, JavaScript |
+| Hosting | Render |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 assignment3_part2/
@@ -45,12 +48,14 @@ assignment3_part2/
 │   └── auth.js            # Authentication middleware
 ├── routes/
 │   ├── auth.js            # Auth routes (login, register, logout)
-│   └── tracks.js          # Tracks CRUD routes
+│   ├── tracks.js          # Tracks CRUD routes
+│   └── playlists.js       # Playlists CRUD routes
 ├── scripts/
 │   └── seed.js            # Database seeding script
 └── public/
     ├── index.html         # Home page
     ├── tracks.html        # Tracks management
+    ├── playlists.html     # Playlists management
     ├── login.html         # Login page
     ├── register.html      # Registration page
     ├── about.html         # About page
@@ -61,7 +66,7 @@ assignment3_part2/
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Install Dependencies
 
@@ -106,7 +111,7 @@ Navigate to `http://localhost:3009`
 
 ---
 
-## API Endpoints
+## 📡 API Endpoints
 
 ### Authentication
 
@@ -127,6 +132,18 @@ Navigate to `http://localhost:3009`
 | PUT | `/api/tracks/:id` | Update track | Yes |
 | DELETE | `/api/tracks/:id` | Delete track | Yes |
 
+### Playlists
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/playlists` | Get user's playlists | Yes |
+| GET | `/api/playlists/:id` | Get playlist with tracks | Yes |
+| POST | `/api/playlists` | Create new playlist | Yes |
+| PUT | `/api/playlists/:id` | Update playlist | Yes |
+| DELETE | `/api/playlists/:id` | Delete playlist | Yes |
+| POST | `/api/playlists/:id/tracks` | Add track to playlist | Yes |
+| DELETE | `/api/playlists/:id/tracks/:trackId` | Remove track from playlist | Yes |
+
 ### Query Parameters (GET /api/tracks)
 
 | Parameter | Description | Example |
@@ -139,7 +156,7 @@ Navigate to `http://localhost:3009`
 
 ---
 
-## Security Implementation
+## 🔐 Security Implementation
 
 ### Password Hashing
 
@@ -150,14 +167,16 @@ const hashedPassword = await bcrypt.hash(password, 10);
 ### Session Configuration
 
 ```javascript
+app.set('trust proxy', 1); // Required for Render/Heroku
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: {
-        httpOnly: true,         // Prevents JS access
-        secure: false,          // true in production (HTTPS)
+        httpOnly: true,         // Prevents JS access (XSS protection)
+        secure: true,           // HTTPS only in production
         sameSite: 'lax',        // CSRF protection
         maxAge: 86400000        // 1 day
     }
@@ -177,7 +196,50 @@ function isAuthenticated(req, res, next) {
 
 ---
 
-## Scripts
+## 📋 Database Collections
+
+### Users
+```javascript
+{
+  _id: ObjectId,
+  username: String,
+  email: String,
+  password: String,      // bcrypt hashed
+  createdAt: Date
+}
+```
+
+### Tracks
+```javascript
+{
+  _id: ObjectId,
+  title: String,
+  artist: String,
+  album: String,
+  genre: String,
+  durationSeconds: Number,
+  releaseYear: Number,
+  createdAt: Date,
+  createdBy: ObjectId    // User reference
+}
+```
+
+### Playlists
+```javascript
+{
+  _id: ObjectId,
+  name: String,
+  description: String,
+  userId: ObjectId,      // Owner
+  tracks: [ObjectId],    // Track references
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+---
+
+## 📜 Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -187,6 +249,25 @@ function isAuthenticated(req, res, next) {
 
 ---
 
-## License
+## 📸 Screenshots
+
+### Home Page
+- Modern glassmorphism design
+- Feature overview
+- API documentation
+
+### Tracks Management
+- View all tracks with filtering
+- Create, edit, delete tracks
+- Column projection
+
+### Playlists
+- Personal playlists for each user
+- Add/remove tracks
+- Create, edit, delete playlists
+
+---
+
+## 🏫 License
 
 This project was created for educational purposes as part of the Web Technologies course at Astana IT University.
