@@ -7,6 +7,7 @@ const MongoStore = require('connect-mongo').default;
 const { connectToDb, getDb } = require('./database/db-mongodb');
 const tracksRouter = require('./routes/tracks');
 const authRouter = require('./routes/auth');
+const playlistsRouter = require('./routes/playlists');
 
 const app = express();
 const PORT = process.env.PORT || 3009;
@@ -53,6 +54,7 @@ async function startServer() {
     // API Routes
     app.use('/api/auth', authRouter);
     app.use('/api/tracks', tracksRouter);
+    app.use('/api/playlists', playlistsRouter);
 
     // HTML Routes
     app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -61,6 +63,7 @@ async function startServer() {
     app.get('/tracks', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tracks.html')));
     app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
     app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
+    app.get('/playlists', (req, res) => res.sendFile(path.join(__dirname, 'public', 'playlists.html')));
 
     // Contact form POST
     app.post('/contact', async (req, res) => {
