@@ -11,6 +11,9 @@ const authRouter = require('./routes/auth');
 const app = express();
 const PORT = process.env.PORT || 3009;
 
+// Trust proxy (required for Render, Heroku, etc. - enables secure cookies behind reverse proxy)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
