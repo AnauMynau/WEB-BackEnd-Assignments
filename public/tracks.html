@@ -100,6 +100,14 @@
             <tbody id="tracks-body"></tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-controls" id="pagination-controls"
+          style="display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+          <button class="btn btn-ghost btn-sm" id="prev-page" onclick="changePage(-1)" disabled>← Previous</button>
+          <span id="page-info" class="muted">Page 1 of 1</span>
+          <button class="btn btn-ghost btn-sm" id="next-page" onclick="changePage(1)" disabled>Next →</button>
+        </div>
       </section>
 
       <!-- Create/Edit Form -->
@@ -189,6 +197,9 @@
     // State
     let isAuthenticated = false;
     let currentUser = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    const ITEMS_PER_PAGE = 10;
 
     // DOM Elements
     const API_BASE = '/api/tracks';
@@ -260,10 +271,23 @@
       const authNotice = document.getElementById('auth-notice');
       const formAuthNotice = document.getElementById('form-auth-notice');
       const formInputs = form.querySelectorAll('input, select, button[type="submit"]');
+      const nav = document.querySelector('.nav');
 
       if (isAuthenticated) {
+        const isAdmin = currentUser.role === 'admin';
+        const roleBadge = isAdmin ? '<span class="admin-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; margin-left: 8px;">ADMIN</span>' : '';
+
+        // Add Admin link for admins
+        if (isAdmin && !document.getElementById('admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'admin-link';
+          adminLink.textContent = 'Admin';
+          nav.insertBefore(adminLink, authContainer);
+        }
+
         authContainer.innerHTML = `
-                    <span class="user-badge">${currentUser.username}</span>
+                    <span class="user-badge">${currentUser.username}${roleBadge}</span>
                     <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
                 `;
         authNotice.classList.add('hidden');
@@ -306,7 +330,7 @@
 
       const fieldsQuery = fields.join(',');
 
-      let url = `${API_BASE}?`;
+      let url = `${API_BASE}?page=${currentPage}&limit=${ITEMS_PER_PAGE}&`;
       if (artistQuery) url += `artist=${encodeURIComponent(artistQuery)}&`;
       if (sortQuery) url += `sortBy=${sortQuery}&`;
       if (fieldsQuery) url += `fields=${fieldsQuery}`;
@@ -320,7 +344,16 @@
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to load tracks');
-        const tracks = await res.json();
+        const data = await res.json();
+
+        // Handle new paginated response format
+        const tracks = data.tracks || data;
+        const pagination = data.pagination || { page: 1, totalPages: 1, total: tracks.length };
+
+        // Update pagination state
+        currentPage = pagination.page;
+        totalPages = pagination.totalPages;
+        updatePaginationUI(pagination);
 
         if (!Array.isArray(tracks) || tracks.length === 0) {
           tracksStatusEl.textContent = 'No tracks found';
@@ -328,12 +361,21 @@
           return;
         }
 
-        tracksStatusEl.textContent = `Showing ${tracks.length} track${tracks.length !== 1 ? 's' : ''}`;
+        tracksStatusEl.textContent = `Showing ${tracks.length} of ${pagination.total} track${pagination.total !== 1 ? 's' : ''} (Page ${pagination.page}/${pagination.totalPages})`;
         tracksBodyEl.innerHTML = '';
+
+        const isAdmin = currentUser && currentUser.role === 'admin';
 
         tracks.forEach((track) => {
           const tr = document.createElement('tr');
           const shortId = track._id.slice(-6);
+
+          // Check if current user owns this track
+          const isOwner = currentUser && track.createdBy && track.createdBy.toString() === currentUser.id;
+          const canEdit = isAuthenticated && (isOwner || isAdmin);
+
+          // Ownership indicator
+          const ownerBadge = isOwner ? '<span style="color: #10b981; font-size: 0.7rem; margin-left: 4px;" title="Your track">★</span>' : '';
 
           const showArtist = track.artist !== undefined ? track.artist : '<span class="muted">—</span>';
           const showAlbum = track.album !== undefined ? (track.album || '—') : '<span class="muted">—</span>';
@@ -342,14 +384,14 @@
 
           tr.innerHTML = `
                         <td><span class="track-id">...${shortId}</span></td>
-                        <td><span class="track-title">${track.title}</span></td>
+                        <td><span class="track-title">${track.title}${ownerBadge}</span></td>
                         <td style="display: ${projArtist.checked ? '' : 'none'};">${showArtist}</td>
                         <td style="display: ${projAlbum.checked ? '' : 'none'};" class="muted">${showAlbum}</td>
                         <td style="display: ${projGenre.checked ? '' : 'none'};"><span class="badge">${showGenre}</span></td>
                         <td style="display: ${projDur.checked ? '' : 'none'};" class="muted">${showDur}</td>
                         <td style="text-align: right;">
                             <div class="flex gap-sm" style="justify-content: flex-end;">
-                                ${isAuthenticated ? `
+                                ${canEdit ? `
                                     <button class="btn btn-ghost btn-sm" onclick="editTrack('${track._id}')">Edit</button>
                                     <button class="btn btn-danger btn-sm" onclick="deleteTrack('${track._id}')">Delete</button>
                                 ` : ''}
@@ -362,6 +404,26 @@
         console.error(err);
         tracksStatusEl.textContent = 'Error loading tracks';
         showToast('Failed to load tracks', 'error');
+      }
+    }
+
+    // Update pagination UI
+    function updatePaginationUI(pagination) {
+      const prevBtn = document.getElementById('prev-page');
+      const nextBtn = document.getElementById('next-page');
+      const pageInfo = document.getElementById('page-info');
+
+      prevBtn.disabled = !pagination.hasPrev;
+      nextBtn.disabled = !pagination.hasNext;
+      pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+    }
+
+    // Change page
+    function changePage(direction) {
+      const newPage = currentPage + direction;
+      if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        loadTracks();
       }
     }
 

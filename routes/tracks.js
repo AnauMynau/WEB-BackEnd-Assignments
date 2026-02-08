@@ -5,10 +5,16 @@ const { isAuthenticated } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET all tracks (PUBLIC - no auth required)
+// GET all tracks with pagination
 router.get('/', async (req, res) => {
     try {
         const db = getDb();
+
+        // Pagination params
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+        const skip = (page - 1) * limit;
+
         // Filtering
         let filter = {};
         if (req.query.artist) filter.artist = { $regex: req.query.artist, $options: 'i' };
@@ -25,22 +31,41 @@ router.get('/', async (req, res) => {
         let projection = {};
         if (req.query.fields) {
             req.query.fields.split(',').forEach(f => projection[f] = 1);
+            // Always include _id and createdBy for ownership display
+            projection._id = 1;
+            projection.createdBy = 1;
         }
+
+        // Get total count for pagination
+        const total = await db.collection('tracks').countDocuments(filter);
+        const totalPages = Math.ceil(total / limit);
 
         const tracks = await db.collection('tracks')
             .find(filter)
             .sort(sort)
             .project(projection)
+            .skip(skip)
+            .limit(limit)
             .toArray();
 
-        res.status(200).json(tracks);
+        res.status(200).json({
+            tracks,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            }
+        });
     } catch (err) {
         console.error('Error fetching tracks:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// GET single track by ID (PUBLIC)
+// GET  by ID (PUBLIC)
 router.get('/:id', async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {
@@ -59,7 +84,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST create new track (PROTECTED - auth required)
+// POST (PROTECTED)
 router.post('/', isAuthenticated, async (req, res) => {
     try {
         const { title, artist, album, genre, durationSeconds, releaseYear, coverUrl } = req.body;
@@ -97,16 +122,31 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
 });
 
-// PUT update track (PROTECTED - auth required)
+// PUT (PROTECTED - Owner or Admin only)
 router.put('/:id', isAuthenticated, async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ error: 'Invalid ID format' });
         }
 
+        const db = getDb();
+
+        // Check if track exists and get owner
+        const track = await db.collection('tracks').findOne({ _id: new ObjectId(req.params.id) });
+        if (!track) {
+            return res.status(404).json({ error: 'Track not found' });
+        }
+
+        // Authorization: only owner or admin can update
+        const isOwner = track.createdBy && track.createdBy.toString() === req.session.userId;
+        const isAdmin = req.session.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ error: 'Forbidden. You can only modify your own tracks.' });
+        }
+
         const { title, artist, album, genre, durationSeconds, releaseYear, coverUrl } = req.body;
 
-        // Build update object with only provided fields
         const updateData = {};
         if (title !== undefined) updateData.title = title.trim();
         if (artist !== undefined) updateData.artist = artist.trim();
@@ -117,14 +157,10 @@ router.put('/:id', isAuthenticated, async (req, res) => {
         if (coverUrl !== undefined) updateData.coverUrl = coverUrl.trim();
         updateData.updatedAt = new Date();
 
-        const result = await getDb().collection('tracks').updateOne(
+        await db.collection('tracks').updateOne(
             { _id: new ObjectId(req.params.id) },
             { $set: updateData }
         );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: 'Track not found' });
-        }
 
         res.json({ message: 'Track updated successfully' });
     } catch (err) {
@@ -133,20 +169,30 @@ router.put('/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// DELETE track (PROTECTED - auth required)
+// DELETE (PROTECTED - Owner or Admin only)
 router.delete('/:id', isAuthenticated, async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ error: 'Invalid ID format' });
         }
 
-        const result = await getDb().collection('tracks').deleteOne({
-            _id: new ObjectId(req.params.id)
-        });
+        const db = getDb();
 
-        if (result.deletedCount === 0) {
+        // Check if track exists and get owner
+        const track = await db.collection('tracks').findOne({ _id: new ObjectId(req.params.id) });
+        if (!track) {
             return res.status(404).json({ error: 'Track not found' });
         }
+
+        // Authorization: only owner or admin can delete
+        const isOwner = track.createdBy && track.createdBy.toString() === req.session.userId;
+        const isAdmin = req.session.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ error: 'Forbidden. You can only delete your own tracks.' });
+        }
+
+        await db.collection('tracks').deleteOne({ _id: new ObjectId(req.params.id) });
 
         res.json({ message: 'Track deleted successfully' });
     } catch (err) {

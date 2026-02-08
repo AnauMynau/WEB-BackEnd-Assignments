@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — TYNDA</title>
+    <meta name="description" content="Admin dashboard for TYNDA music platform">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <a class="brand" href="/">TYNDA</a>
+            <nav class="nav">
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
+                <a href="/tracks">Tracks</a>
+                <a href="/playlists">Playlists</a>
+                <a class="active" href="/admin">Admin</a>
+                <div class="nav-auth" id="nav-auth"></div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div style="margin-bottom: 24px;">
+            <h1>🔐 Admin Panel</h1>
+            <p class="muted" id="admin-status">Loading...</p>
+        </div>
+
+        <div id="access-denied" class="hidden">
+            <div class="card center" style="padding: 60px;">
+                <h2 style="color: #ef4444;">⛔ Access Denied</h2>
+                <p class="muted">You need admin privileges to access this page.</p>
+                <a href="/tracks" class="btn" style="margin-top: 20px;">Go to Tracks</a>
+            </div>
+        </div>
+
+        <div id="admin-content" class="hidden">
+            <div class="grid"
+                style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div class="card center" style="padding: 30px;">
+                    <h3 style="font-size: 2.5rem; margin: 0;" id="stat-users">-</h3>
+                    <p class="muted">Total Users</p>
+                </div>
+                <div class="card center" style="padding: 30px;">
+                    <h3 style="font-size: 2.5rem; margin: 0;" id="stat-tracks">-</h3>
+                    <p class="muted">Total Tracks</p>
+                </div>
+                <div class="card center" style="padding: 30px;">
+                    <h3 style="font-size: 2.5rem; margin: 0;" id="stat-playlists">-</h3>
+                    <p class="muted">Total Playlists</p>
+                </div>
+            </div>
+
+            <section class="card">
+                <div class="card-head">
+                    <h2>👥 User Management</h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Created</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-body"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© <span id="year"></span> TYNDA — Admin Panel</p>
+        </div>
+    </footer>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        let currentUser = null;
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✓', error: '✕', warning: '⚠' };
+            toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || '•'}</span>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+      `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        async function checkAdmin() {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+
+                if (!data.isAuthenticated || data.user.role !== 'admin') {
+                    document.getElementById('admin-status').textContent = '';
+                    document.getElementById('access-denied').classList.remove('hidden');
+                    return false;
+                }
+
+                currentUser = data.user;
+                document.getElementById('nav-auth').innerHTML = `
+          <span class="user-badge">${data.user.username}
+            <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; margin-left: 8px;">ADMIN</span>
+          </span>
+          <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+        `;
+                document.getElementById('admin-content').classList.remove('hidden');
+                document.getElementById('admin-status').textContent = 'Welcome, Administrator';
+                return true;
+            } catch (err) {
+                console.error('Admin check failed:', err);
+                return false;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('stat-users').textContent = stats.users || 0;
+                    document.getElementById('stat-tracks').textContent = stats.tracks || 0;
+                    document.getElementById('stat-playlists').textContent = stats.playlists || 0;
+                } else {
+                    // Fallback: count from tracks endpoint
+                    const tracksData = await fetch('/api/tracks?limit=1').then(r => r.json());
+                    document.getElementById('stat-tracks').textContent = tracksData.pagination?.total || '?';
+                    document.getElementById('stat-users').textContent = '—';
+                    document.getElementById('stat-playlists').textContent = '—';
+                }
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users');
+                if (!response.ok) {
+                    document.getElementById('users-body').innerHTML = `
+            <tr><td colspan="5" class="center muted" style="padding: 40px;">
+              Admin API endpoints available after deployment.<br>
+              <small>User management requires additional backend routes.</small>
+            </td></tr>
+          `;
+                    return;
+                }
+                const users = await response.json();
+                renderUsers(users);
+            } catch (err) {
+                document.getElementById('users-body').innerHTML = `
+          <tr><td colspan="5" class="center muted" style="padding: 40px;">
+            Could not load users. Admin API may not be implemented yet.
+          </td></tr>
+        `;
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('users-body');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                const roleColor = user.role === 'admin' ? '#f59e0b' : '#6b7280';
+                const created = new Date(user.createdAt).toLocaleDateString();
+
+                tr.innerHTML = `
+          <td><strong>${user.username}</strong></td>
+          <td class="muted">${user.email}</td>
+          <td><span class="badge" style="background: ${roleColor};">${user.role.toUpperCase()}</span></td>
+          <td class="muted">${created}</td>
+          <td style="text-align: right;">
+            ${user.role !== 'admin' ? `
+              <button class="btn btn-ghost btn-sm" onclick="promoteUser('${user._id}')">Make Admin</button>
+            ` : '<span class="muted">—</span>'}
+          </td>
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function promoteUser(userId) {
+            if (!confirm('Are you sure you want to make this user an admin?')) return;
+
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: 'admin' })
+                });
+
+                if (response.ok) {
+                    showToast('User promoted to admin', 'success');
+                    loadUsers();
+                } else {
+                    throw new Error('Failed to update role');
+                }
+            } catch (err) {
+                showToast('Failed to update user role', 'error');
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+
+        // Initialize
+        checkAdmin().then(isAdmin => {
+            if (isAdmin) {
+                loadStats();
+                loadUsers();
+            }
+        });
+    </script>
+</body>
+
+</html>

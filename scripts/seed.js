@@ -1,10 +1,3 @@
-/**
- * Database Seed Script
- * Populates the database with sample tracks and a test user
- * 
- * Run: node scripts/seed.js
- */
-
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
@@ -41,20 +34,20 @@ const sampleTracks = [
     { title: 'Believer', artist: 'Imagine Dragons', album: 'Evolve', genre: 'Rock', durationSeconds: 204, releaseYear: 2017 }
 ];
 
-// Test users
+// Test users with roles
 const sampleUsers = [
-    { username: 'admin', email: 'admin@tynda.kz', password: 'admin123' },
-    { username: 'testuser', email: 'test@tynda.kz', password: 'test123' }
+    { username: 'admin', email: 'admin@tynda.kz', password: 'admin123', role: 'admin' },
+    { username: 'testuser', email: 'test@tynda.kz', password: 'test123', role: 'user' }
 ];
 
 async function seed() {
-    console.log('🌱 Starting database seed...\n');
+    console.log('Starting database seed...\n');
 
     const client = new MongoClient(MONGO_URI);
 
     try {
         await client.connect();
-        console.log('✓ Connected to MongoDB\n');
+        console.log('Connected to MongoDB\n');
 
         const db = client.db(DB_NAME);
 
@@ -62,43 +55,52 @@ async function seed() {
         console.log('Clearing existing data...');
         await db.collection('tracks').deleteMany({});
         await db.collection('users').deleteMany({});
-        console.log('✓ Cleared existing tracks and users\n');
+        console.log('Cleared existing tracks and users\n');
 
-        // Insert tracks
-        console.log('Inserting tracks...');
-        const tracksWithTimestamp = sampleTracks.map(track => ({
-            ...track,
-            createdAt: new Date(),
-            coverUrl: ''
-        }));
-
-        const tracksResult = await db.collection('tracks').insertMany(tracksWithTimestamp);
-        console.log(`✓ Inserted ${tracksResult.insertedCount} tracks\n`);
-
-        // Insert users with hashed passwords
+        // Insert users first to get their IDs
         console.log('Creating users...');
+        const userIds = {};
         for (const user of sampleUsers) {
             const hashedPassword = await bcrypt.hash(user.password, 10);
-            await db.collection('users').insertOne({
+            const result = await db.collection('users').insertOne({
                 username: user.username,
                 email: user.email,
                 password: hashedPassword,
+                role: user.role,
                 createdAt: new Date()
             });
-            console.log(`  ✓ Created user: ${user.username} (${user.email})`);
+            userIds[user.username] = result.insertedId;
+            console.log(`  ✓ Created ${user.role}: ${user.username} (${user.email})`);
         }
 
+        // Insert tracks with createdBy (distribute between users for testing)
+        console.log('\nInserting tracks...');
+        const tracksWithOwnership = sampleTracks.map((track, index) => ({
+            ...track,
+            createdAt: new Date(),
+            coverUrl: '',
+            // First half owned by admin, second half by testuser
+            createdBy: index < Math.ceil(sampleTracks.length / 2)
+                ? userIds['admin']
+                : userIds['testuser']
+        }));
+
+        const tracksResult = await db.collection('tracks').insertMany(tracksWithOwnership);
+        console.log(`Inserted ${tracksResult.insertedCount} tracks`);
+        console.log(`  - ${Math.ceil(sampleTracks.length / 2)} tracks owned by admin`);
+        console.log(`  - ${Math.floor(sampleTracks.length / 2)} tracks owned by testuser`);
+
         console.log('\n========================================');
-        console.log('🎉 Database seeded successfully!');
+        console.log('Database seeded successfully!');
         console.log('========================================\n');
         console.log('Test accounts:');
-        console.log('  Email: admin@tynda.kz | Password: admin123');
-        console.log('  Email: test@tynda.kz  | Password: test123');
-        console.log('\nTotal tracks:', tracksWithTimestamp.length);
+        console.log('  Email: admin@tynda.kz | Password: admin123 (ADMIN)');
+        console.log('  Email: test@tynda.kz  | Password: test123 (USER)');
+        console.log('\nTotal tracks:', tracksWithOwnership.length);
         console.log('========================================\n');
 
     } catch (err) {
-        console.error('❌ Seed failed:', err);
+        console.error('Seed failed:', err);
         process.exit(1);
     } finally {
         await client.close();

@@ -37,7 +37,7 @@
             </div>
         </div>
 
-        <!-- Main content (shown when authenticated) -->
+        <!-- Main content -->
         <div id="main-content" class="hidden">
             <div
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
@@ -49,7 +49,6 @@
             </div>
 
             <div class="grid grid-3" id="playlists-grid">
-                <!-- Playlists will be rendered here -->
             </div>
         </div>
 
@@ -135,6 +134,15 @@
                     <label for="playlist-description">Description</label>
                     <textarea id="playlist-description" placeholder="What kind of music is in this playlist?"
                         rows="3"></textarea>
+                </div>
+                <div class="field">
+                    <label for="playlist-cover">Cover Image URL</label>
+                    <input type="url" id="playlist-cover" placeholder="https://example.com/image.jpg">
+                    <small class="muted" style="font-size: 0.8rem;">Paste an image URL for your playlist cover</small>
+                </div>
+                <div id="cover-preview" class="hidden" style="margin-bottom: 16px; text-align: center;">
+                    <img id="cover-preview-img" src="" alt="Cover preview"
+                        style="max-width: 150px; max-height: 150px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                 </div>
                 <div class="actions">
                     <button type="submit" class="btn" id="modal-submit-btn">Create Playlist</button>
@@ -251,14 +259,21 @@
                 }
 
                 statusEl.textContent = `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`;
-                gridEl.innerHTML = playlists.map(p => `
+                gridEl.innerHTML = playlists.map(p => {
+                    const coverStyle = p.coverUrl
+                        ? `background-image: url('${p.coverUrl}'); background-size: cover; background-position: center;`
+                        : `background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.3));`;
+                    return `
           <div class="card playlist-card animate-fadeInUp" onclick="viewPlaylist('${p._id}')">
-            <div class="playlist-icon">🎵</div>
+            <div class="playlist-cover" style="width: 100%; height: 140px; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; ${coverStyle}">
+              ${!p.coverUrl ? '<span style="font-size: 3rem;">🎵</span>' : ''}
+            </div>
             <h3>${p.name}</h3>
             <p class="muted">${p.tracks?.length || 0} tracks</p>
             ${p.description ? `<p class="muted" style="font-size: 0.85rem; margin-top: 8px;">${p.description}</p>` : ''}
           </div>
-        `).join('');
+        `;
+                }).join('');
             } catch (err) {
                 console.error(err);
                 showToast('Failed to load playlists', 'error');
@@ -272,16 +287,30 @@
             document.getElementById('edit-playlist-id').value = '';
             document.getElementById('playlist-name').value = '';
             document.getElementById('playlist-description').value = '';
+            document.getElementById('playlist-cover').value = '';
+            document.getElementById('cover-preview').classList.add('hidden');
             document.getElementById('playlist-modal').classList.remove('hidden');
         }
 
         // Show edit modal
+        let currentPlaylistData = null;
+
         function showEditModal() {
             document.getElementById('modal-title').textContent = 'Edit Playlist';
             document.getElementById('modal-submit-btn').textContent = 'Save Changes';
             document.getElementById('edit-playlist-id').value = currentPlaylistId;
             document.getElementById('playlist-name').value = document.getElementById('detail-name').textContent;
             document.getElementById('playlist-description').value = document.getElementById('detail-description').textContent;
+            document.getElementById('playlist-cover').value = currentPlaylistData?.coverUrl || '';
+
+            // Show preview if cover exists
+            if (currentPlaylistData?.coverUrl) {
+                document.getElementById('cover-preview-img').src = currentPlaylistData.coverUrl;
+                document.getElementById('cover-preview').classList.remove('hidden');
+            } else {
+                document.getElementById('cover-preview').classList.add('hidden');
+            }
+
             document.getElementById('playlist-modal').classList.remove('hidden');
         }
 
@@ -296,6 +325,7 @@
             const id = document.getElementById('edit-playlist-id').value;
             const name = document.getElementById('playlist-name').value.trim();
             const description = document.getElementById('playlist-description').value.trim();
+            const coverUrl = document.getElementById('playlist-cover').value.trim();
 
             try {
                 const url = id ? `/api/playlists/${id}` : '/api/playlists';
@@ -304,7 +334,7 @@
                 const res = await fetch(url, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description })
+                    body: JSON.stringify({ name, description, coverUrl })
                 });
 
                 if (!res.ok) {
@@ -318,6 +348,8 @@
                 if (id && currentPlaylistId === id) {
                     document.getElementById('detail-name').textContent = name;
                     document.getElementById('detail-description').textContent = description;
+                    // Refresh to show updated cover
+                    viewPlaylist(id);
                 } else {
                     loadPlaylists();
                 }
@@ -335,6 +367,9 @@
             try {
                 const res = await fetch(`/api/playlists/${id}`);
                 const playlist = await res.json();
+
+                // Store for edit modal
+                currentPlaylistData = playlist;
 
                 document.getElementById('detail-name').textContent = playlist.name;
                 document.getElementById('detail-description').textContent = playlist.description || '';
@@ -379,8 +414,11 @@
         // Load available tracks to add
         async function loadAvailableTracks(existingTrackIds) {
             try {
-                const res = await fetch('/api/tracks');
-                allTracks = await res.json();
+                const res = await fetch('/api/tracks?limit=50');
+                const data = await res.json();
+
+                // Handle paginated response
+                allTracks = data.tracks || data;
 
                 const existingIds = existingTrackIds.map(id => id.toString());
                 const available = allTracks.filter(t => !existingIds.includes(t._id.toString()));
@@ -460,6 +498,21 @@
                 showToast(err.message, 'error');
             }
         }
+
+        // Live preview for cover URL
+        document.getElementById('playlist-cover').addEventListener('input', function (e) {
+            const url = e.target.value.trim();
+            const preview = document.getElementById('cover-preview');
+            const previewImg = document.getElementById('cover-preview-img');
+
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                previewImg.src = url;
+                previewImg.onload = () => preview.classList.remove('hidden');
+                previewImg.onerror = () => preview.classList.add('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        });
 
         // Initialize
         checkAuth();

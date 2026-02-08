@@ -8,6 +8,7 @@ const { connectToDb, getDb } = require('./database/db-mongodb');
 const tracksRouter = require('./routes/tracks');
 const authRouter = require('./routes/auth');
 const playlistsRouter = require('./routes/playlists');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3009;
@@ -23,10 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 // Start server function
 async function startServer() {
   try {
-    // Connect to database first
     await connectToDb();
 
-    // Session configuration with security flags (after DB connection)
+    // Session configuration with security flags
     app.use(session({
       secret: process.env.SESSION_SECRET || 'tynda-secret-key-2024',
       resave: false,
@@ -34,14 +34,14 @@ async function startServer() {
       store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
         dbName: 'tynda_music',
-        ttl: 24 * 60 * 60, // 1 day
+        ttl: 24 * 60 * 60,
         autoRemove: 'native'
       }),
       cookie: {
-        httpOnly: true,        // REQUIRED: Prevents client-side JS access
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: 'lax',       // CSRF protection
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000
       }
     }));
 
@@ -55,6 +55,7 @@ async function startServer() {
     app.use('/api/auth', authRouter);
     app.use('/api/tracks', tracksRouter);
     app.use('/api/playlists', playlistsRouter);
+    app.use('/api/admin', adminRouter);
 
     // HTML Routes
     app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -64,6 +65,7 @@ async function startServer() {
     app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
     app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
     app.get('/playlists', (req, res) => res.sendFile(path.join(__dirname, 'public', 'playlists.html')));
+    app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
     // Contact form POST
     app.post('/contact', async (req, res) => {

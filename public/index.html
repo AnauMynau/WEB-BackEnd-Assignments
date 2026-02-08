@@ -153,10 +153,23 @@
         const response = await fetch('/api/auth/me');
         const data = await response.json();
         const authContainer = document.getElementById('nav-auth');
+        const nav = document.querySelector('.nav');
 
         if (data.isAuthenticated) {
+          const isAdmin = data.user.role === 'admin';
+          const roleBadge = isAdmin ? '<span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; margin-left: 8px;">ADMIN</span>' : '';
+
+          // Add Admin link for admins
+          if (isAdmin && !document.getElementById('admin-link')) {
+            const adminLink = document.createElement('a');
+            adminLink.href = '/admin';
+            adminLink.id = 'admin-link';
+            adminLink.textContent = 'Admin';
+            nav.insertBefore(adminLink, authContainer);
+          }
+
           authContainer.innerHTML = `
-                        <span class="user-badge">${data.user.username}</span>
+                        <span class="user-badge">${data.user.username}${roleBadge}</span>
                         <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
                     `;
         } else {

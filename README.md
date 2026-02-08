@@ -1,28 +1,39 @@
 # TYNDA Music Streaming Platform
 
-A web application for music track management with secure session-based authentication and personal playlists.
+A web application for music track management with secure session-based authentication, role-based access control, and personal playlists.
 
 🌐 **Live Demo:** [https://assignment3-part2.onrender.com](https://assignment3-part2.onrender.com)
 
 **Course:** Web Technologies (Backend)  
-**Assignment:** 4 - Sessions & Cookies Security  
+**Assignment:** Final Project - Production Web Application (Week 10)  
 **Team:** Kassenov Abdulkarim, Noyan Inayatulla, Atalykov Sultan
 
 ---
 
-## ✨ Features
+## Features
 
-- 🔐 Session-based authentication with express-session
-- 🔒 Password hashing using bcrypt (10 salt rounds)
-- 🛡️ HttpOnly cookies for XSS protection
-- 🎵 Full CRUD operations for tracks
-- 📋 **Personal playlists** for each user
-- 🔍 Search, filter, and sort functionality
-- 🎨 Responsive modern UI with glassmorphism design
+### Authentication & Security
+- Session-based authentication with express-session
+- Password hashing using bcrypt (10 salt rounds)
+- HttpOnly cookies for XSS protection
+- Secure session storage in MongoDB
+
+### Role-Based Access Control
+- **Two roles**: `user` and `admin`
+- Users can only modify their own tracks
+- Admins have full access to all resources
+- Admin panel for user management
+
+### Core Functionality
+- Full CRUD operations for tracks with **pagination**
+- Personal playlists for each user
+- Search, filter, and sort functionality
+- Ownership indicators in UI (★ for your tracks)
+- Responsive modern UI with glassmorphism design
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -35,27 +46,29 @@ A web application for music track management with secure session-based authentic
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 assignment3_part2/
 ├── server.js              # Main server file
 ├── package.json           # Dependencies
-├── .env                   # Environment variables
+├── .env                   # Environment variables (not in repo)
 ├── database/
 │   └── db-mongodb.js      # MongoDB connection
 ├── middleware/
-│   └── auth.js            # Authentication middleware
+│   └── auth.js            # Auth & role middleware
 ├── routes/
 │   ├── auth.js            # Auth routes (login, register, logout)
-│   ├── tracks.js          # Tracks CRUD routes
-│   └── playlists.js       # Playlists CRUD routes
+│   ├── tracks.js          # Tracks CRUD with pagination
+│   ├── playlists.js       # Playlists CRUD routes
+│   └── admin.js           # Admin-only routes
 ├── scripts/
 │   └── seed.js            # Database seeding script
 └── public/
     ├── index.html         # Home page
-    ├── tracks.html        # Tracks management
+    ├── tracks.html        # Tracks management with pagination
     ├── playlists.html     # Playlists management
+    ├── admin.html         # Admin panel (admin only)
     ├── login.html         # Login page
     ├── register.html      # Registration page
     ├── about.html         # About page
@@ -66,7 +79,7 @@ assignment3_part2/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 
@@ -85,15 +98,15 @@ SESSION_SECRET=your_secret_key
 NODE_ENV=development
 ```
 
-### 3. Seed Database (Optional)
+### 3. Seed Database
 
 ```bash
 npm run seed
 ```
 
 This creates 25 sample tracks and 2 test users:
-- `admin@tynda.kz` / `admin123`
-- `test@tynda.kz` / `test123`
+- `admin@tynda.kz` / `admin123` (ADMIN)
+- `test@tynda.kz` / `test123` (USER)
 
 ### 4. Run Server
 
@@ -111,7 +124,7 @@ Navigate to `http://localhost:3009`
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Authentication
 
@@ -120,17 +133,17 @@ Navigate to `http://localhost:3009`
 | POST | `/api/auth/register` | Create new account | No |
 | POST | `/api/auth/login` | Login to account | No |
 | POST | `/api/auth/logout` | Logout current user | Yes |
-| GET | `/api/auth/me` | Get current user info | No |
+| GET | `/api/auth/me` | Get current user info + role | No |
 
 ### Tracks
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/tracks` | Get all tracks | No |
-| GET | `/api/tracks/:id` | Get single track | No |
-| POST | `/api/tracks` | Create new track | Yes |
-| PUT | `/api/tracks/:id` | Update track | Yes |
-| DELETE | `/api/tracks/:id` | Delete track | Yes |
+| Method | Endpoint | Description | Auth | Owner/Admin |
+|--------|----------|-------------|------|-------------|
+| GET | `/api/tracks` | Get paginated tracks | No | - |
+| GET | `/api/tracks/:id` | Get single track | No | - |
+| POST | `/api/tracks` | Create new track | Yes | - |
+| PUT | `/api/tracks/:id` | Update track | Yes | ✓ |
+| DELETE | `/api/tracks/:id` | Delete track | Yes | ✓ |
 
 ### Playlists
 
@@ -142,12 +155,23 @@ Navigate to `http://localhost:3009`
 | PUT | `/api/playlists/:id` | Update playlist | Yes |
 | DELETE | `/api/playlists/:id` | Delete playlist | Yes |
 | POST | `/api/playlists/:id/tracks` | Add track to playlist | Yes |
-| DELETE | `/api/playlists/:id/tracks/:trackId` | Remove track from playlist | Yes |
+| DELETE | `/api/playlists/:id/tracks/:trackId` | Remove track | Yes |
+
+### Admin (Admin only)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/stats` | Get platform statistics | Admin |
+| GET | `/api/admin/users` | Get all users | Admin |
+| PATCH | `/api/admin/users/:id/role` | Update user role | Admin |
+| DELETE | `/api/admin/users/:id` | Delete user | Admin |
 
 ### Query Parameters (GET /api/tracks)
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
+| `page` | Page number (default: 1) | `?page=2` |
+| `limit` | Items per page (default: 10, max: 50) | `?limit=20` |
 | `artist` | Filter by artist name | `?artist=Queen` |
 | `title` | Filter by title | `?title=Bohemian` |
 | `genre` | Filter by genre | `?genre=Rock` |
@@ -156,7 +180,7 @@ Navigate to `http://localhost:3009`
 
 ---
 
-## 🔐 Security Implementation
+## Security Implementation
 
 ### Password Hashing
 
@@ -196,7 +220,7 @@ function isAuthenticated(req, res, next) {
 
 ---
 
-## 📋 Database Collections
+## Database Collections
 
 ### Users
 ```javascript
@@ -239,7 +263,7 @@ function isAuthenticated(req, res, next) {
 
 ---
 
-## 📜 Scripts
+## Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -249,25 +273,26 @@ function isAuthenticated(req, res, next) {
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ### Home Page
 - Modern glassmorphism design
 - Feature overview
 - API documentation
+![alt text](image.png)
 
 ### Tracks Management
 - View all tracks with filtering
 - Create, edit, delete tracks
 - Column projection
+![alt text](image-1.png)
 
 ### Playlists
 - Personal playlists for each user
 - Add/remove tracks
 - Create, edit, delete playlists
+-![alt text](image-2.png)--
 
----
-
-## 🏫 License
+## License
 
 This project was created for educational purposes as part of the Web Technologies course at Astana IT University.

@@ -8,7 +8,7 @@ const router = express.Router();
 // All playlist routes require authentication
 router.use(isAuthenticated);
 
-// GET /api/playlists - Get all playlists for current user
+//  Get all playlists for current user
 router.get('/', async (req, res) => {
     try {
         const db = getDb();
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /api/playlists/:id - Get single playlist with tracks
+// GET /api/playlists/:id
 router.get('/:id', async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {
@@ -59,10 +59,10 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST /api/playlists - Create new playlist
+// POST /api/playlists 
 router.post('/', async (req, res) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, coverUrl } = req.body;
 
         if (!name || name.trim().length === 0) {
             return res.status(400).json({ error: 'Playlist name is required' });
@@ -77,6 +77,7 @@ router.post('/', async (req, res) => {
         const newPlaylist = {
             name: name.trim(),
             description: description?.trim() || '',
+            coverUrl: coverUrl?.trim() || '',
             userId: new ObjectId(req.session.userId),
             tracks: [],
             createdAt: new Date(),
@@ -91,14 +92,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT /api/playlists/:id - Update playlist name/description
+// PUT /api/playlists/:id
 router.put('/:id', async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ error: 'Invalid playlist ID' });
         }
 
-        const { name, description } = req.body;
+        const { name, description, coverUrl } = req.body;
         const updateData = { updatedAt: new Date() };
 
         if (name !== undefined) {
@@ -109,6 +110,9 @@ router.put('/:id', async (req, res) => {
         }
         if (description !== undefined) {
             updateData.description = description.trim();
+        }
+        if (coverUrl !== undefined) {
+            updateData.coverUrl = coverUrl.trim();
         }
 
         const db = getDb();
@@ -131,7 +135,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// POST /api/playlists/:id/tracks - Add track to playlist
+// POST /api/playlists/:id/tracks
 router.post('/:id/tracks', async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {
@@ -175,7 +179,7 @@ router.post('/:id/tracks', async (req, res) => {
     }
 });
 
-// DELETE /api/playlists/:id/tracks/:trackId - Remove track from playlist
+// DELETE /api/playlists/:id/tracks/:trackId 
 router.delete('/:id/tracks/:trackId', async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id) || !ObjectId.isValid(req.params.trackId)) {
@@ -205,7 +209,7 @@ router.delete('/:id/tracks/:trackId', async (req, res) => {
     }
 });
 
-// DELETE /api/playlists/:id - Delete playlist
+// DELETE /api/playlists/:id
 router.delete('/:id', async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) {

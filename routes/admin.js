@@ -1,0 +1,115 @@
+const express = require('express');
+const { ObjectId } = require('mongodb');
+const { getDb } = require('../database/db-mongodb');
+const { isAuthenticated, isAdmin } = require('../middleware/auth');
+
+const router = express.Router();
+
+// All admin routes require authentication and admin role
+router.use(isAuthenticated);
+router.use(isAdmin);
+
+// GET /api/admin/stats - Get platform statistics
+router.get('/stats', async (req, res) => {
+    try {
+        const db = getDb();
+
+        const [usersCount, tracksCount, playlistsCount] = await Promise.all([
+            db.collection('users').countDocuments(),
+            db.collection('tracks').countDocuments(),
+            db.collection('playlists').countDocuments()
+        ]);
+
+        res.json({
+            users: usersCount,
+            tracks: tracksCount,
+            playlists: playlistsCount
+        });
+    } catch (err) {
+        console.error('Error fetching stats:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// GET /api/admin/users - Get all users
+router.get('/users', async (req, res) => {
+    try {
+        const db = getDb();
+        const users = await db.collection('users')
+            .find({}, { projection: { password: 0 } }) // Exclude password
+            .sort({ createdAt: -1 })
+            .toArray();
+
+        res.json(users);
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// PATCH /api/admin/users/:id/role - Update user role
+router.patch('/users/:id/role', async (req, res) => {
+    try {
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        const { role } = req.body;
+
+        if (!role || !['user', 'admin'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role. Must be "user" or "admin".' });
+        }
+
+        const db = getDb();
+
+        // Prevent self-demotion
+        if (req.params.id === req.session.userId && role !== 'admin') {
+            return res.status(400).json({ error: 'Cannot demote yourself from admin' });
+        }
+
+        const result = await db.collection('users').updateOne(
+            { _id: new ObjectId(req.params.id) },
+            { $set: { role, updatedAt: new Date() } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ message: `User role updated to ${role}` });
+    } catch (err) {
+        console.error('Error updating user role:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// DELETE /api/admin/users/:id - Delete a user
+router.delete('/users/:id', async (req, res) => {
+    try {
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // Prevent self-deletion
+        if (req.params.id === req.session.userId) {
+            return res.status(400).json({ error: 'Cannot delete your own account' });
+        }
+
+        const db = getDb();
+
+        const result = await db.collection('users').deleteOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ message: 'User deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting user:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+module.exports = router;

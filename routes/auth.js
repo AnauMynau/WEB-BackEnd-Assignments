@@ -4,7 +4,7 @@ const { getDb } = require('../database/db-mongodb');
 
 const router = express.Router();
 
-// POST /api/auth/register - Register new user
+// POST /api/auth/register 
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -39,22 +39,24 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'User with this email or username already exists' });
         }
 
-        // Hash password with bcrypt (10 salt rounds)
+        // Hash password with bcrypt 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user
+        // Create user with default 'user' role
         const newUser = {
             username,
             email,
             password: hashedPassword,
+            role: 'user',
             createdAt: new Date()
         };
 
         const result = await db.collection('users').insertOne(newUser);
 
-        // Create session
+        // Create session with role
         req.session.userId = result.insertedId.toString();
         req.session.username = username;
+        req.session.role = 'user';
 
         res.status(201).json({
             message: 'Registration successful',
@@ -67,7 +69,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// POST /api/auth/login - Login user
+// POST /api/auth/login 
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -95,9 +97,10 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Create session
+        // Create session with role
         req.session.userId = user._id.toString();
         req.session.username = user.username;
+        req.session.role = user.role || 'user';
 
         res.json({
             message: 'Login successful',
@@ -110,7 +113,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// POST /api/auth/logout - Logout user
+// POST /api/auth/logout 
 router.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -121,14 +124,15 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// GET /api/auth/me - Get current user
+// GET /api/auth/me - Get current user info including role
 router.get('/me', (req, res) => {
     if (req.session && req.session.userId) {
         res.json({
             isAuthenticated: true,
             user: {
                 id: req.session.userId,
-                username: req.session.username
+                username: req.session.username,
+                role: req.session.role || 'user'
             }
         });
     } else {
